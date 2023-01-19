@@ -20,7 +20,7 @@ set(TOOLCHAIN_SIZE ${TOOLCHAIN}/arm-none-eabi-size.exe CACHE STRING "arm-none-ea
 set(TOOLCHAIN_COPY ${TOOLCHAIN}/arm-none-eabi-objcopy.exe CACHE STRING "arm-none-eabi-objcopy")
 
 # --specs=nano.specs is both a compiler and linker option
-set(ARM_OPTIONS -mcpu=cortex-m4 -mfloat-abi=soft --specs=nano.specs)
+set(ARM_OPTIONS -std=gnu11 -mthumb -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard)
 
 add_compile_options(
   ${ARM_OPTIONS}
@@ -28,17 +28,21 @@ add_compile_options(
   -funsigned-char
   -ffunction-sections
   -fdata-sections
+  -fstack-usage
   -fno-rtti
   -fno-exceptions
+  -g3 -O0 -Wall
   -MMD
   -MP)
 
 add_compile_definitions(
   STM32F437xx
   USE_HAL_DRIVER
+  USE_FULL_LL_DRIVER
 #  HAL_DRIVERS_ONLY
   USE_FULL_ASSERT
   CMSIS_NN
+  MBEDTLS_USER_CONFIG_FILE=\"user_mbedtls_config.h\"
   $<$<CONFIG:DEBUG>:OS_USE_TRACE_SEMIHOSTING_STDOUT>
   $<$<CONFIG:DEBUG>:OS_USE_SEMIHOSTING>
 )
@@ -51,6 +55,7 @@ add_compile_definitions(
 
 add_link_options(
   ${ARM_OPTIONS}
+  -Wl,--wrap=malloc -Wl,--wrap=_malloc_r -Wl,--wrap=calloc -Wl,--wrap=_calloc_r -Wl,--wrap=realloc -Wl,--wrap=_realloc_r
 #  $<$<CONFIG:DEBUG>:--specs=rdimon.specs>
 #  $<$<CONFIG:RELEASE>:--specs=nosys.specs>
   $<$<CONFIG:DEBUG>:-u_printf_float>
@@ -65,4 +70,3 @@ set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
-

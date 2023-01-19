@@ -344,7 +344,7 @@ void loop() {
 }
 #endif // HAL_DRIVERS_ONLY
 
-#ifdef  USE_FULL_ASSERT
+#if 0
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.
