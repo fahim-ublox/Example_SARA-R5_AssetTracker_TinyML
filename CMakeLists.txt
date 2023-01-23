@@ -49,7 +49,7 @@ include(${UBXLIB_BASE}/port/ubxlib.cmake)
 message(STATUS "Including /port/ubxlib.cmake")
 
 set(PLATFORM_PATH ${UBXLIB_BASE}/port/platform/stm32cube)
-set(FREERTOS_PATH  ${CMAKE_SOURCE_DIR}/FreeRTOS)
+set(FREERTOS_PATH  ${CMAKE_SOURCE_DIR}/Middlewares/Third_Party/FreeRTOS)
 set(MBEDTLS_PATH ${CMAKE_SOURCE_DIR}/mbedTLS)
 
 # Ubxlib port
