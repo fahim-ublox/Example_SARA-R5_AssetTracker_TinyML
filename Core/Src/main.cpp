@@ -76,7 +76,7 @@ static const uDeviceCfg_t gDeviceCfg = {
 		{
 		  {
 		    0,
-		    0,//U_CFG_TEST_CELL_MODULE_TYPE,
+			U_CFG_TEST_CELL_MODULE_TYPE,//U_CFG_TEST_CELL_MODULE_TYPE,
 		    //"1234", /* SIM pin */
 		    NULL, /* SIM pin */
 		    U_CFG_APP_PIN_CELL_ENABLE_POWER,
@@ -384,7 +384,6 @@ void StartDefaultTask(void const * argument)
 #ifndef NO_UBX_LIB_PRESENT
   uCellPwrIsAlive(devHandle);
 #endif //NO_UBX_LIB_PRESENT
-  xSemaphoreGive( myBinarySem01Handle);
 
   // Bring up the network interface
   uPortLog("Bringing up the network...\n");
@@ -470,6 +469,9 @@ void StartDefaultTask(void const * argument)
   uPortDeinit();
 
   uPortLog("Done.\n");
+
+  xSemaphoreGive( myBinarySem01Handle);
+
   /* Infinite loop */
   while (true)
   {
