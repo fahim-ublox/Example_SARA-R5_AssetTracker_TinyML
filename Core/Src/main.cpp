@@ -51,14 +51,13 @@
 
 #ifndef NO_UBX_LIB_PRESENT
 // Echo server URL and port number
-// HTTPS server URL: this is a test server that accepts PUT/POST
-// requests and GET/HEAD/DELETE requests on port 8081; there is
-// also an HTTP server on port 8080.
-#define MY_SERVER_NAME "ubxlib.redirectme.net:8081"
-
-// Some data to PUT and GET with the server.
-const char *gpMyData = "Hello world!";
-#define MY_SERVER_PORT 5055
+// HTTPS server URL: A test server that accepts PUT/POST
+#define MY_SERVER_NAME "Put your server's address here"// Some data to PUT and GET with the server.
+#define USERNAME "Add Username"
+#define PASSWORD "Add Password"
+#define FILENAME_HTTP_RESPONSE "ubxlibhttp_0"
+#define FILENAME_HTTP_POST_PUT "ubxlibhttp_0_putpost"
+const char *gpMyData = "Hello ML for microcontroller's world!";
 
 // Cellular configuration.
 // Set U_CFG_TEST_CELL_MODULE_TYPE to your module type,
@@ -167,7 +166,7 @@ void handle_output(tflite::ErrorReporter* error_reporter, float x_value, float y
 #endif //# HAL_DRIVERS_ONLY
 
 /* Private variables ---------------------------------------------------------*/
-
+char file_buffer[1000];
 
 osThreadId Task1Handle;
 osThreadId Task2Handle;
@@ -326,7 +325,7 @@ void StartDefaultTask(void const * argument)
   uHttpClientConnection_t connection = U_HTTP_CLIENT_CONNECTION_DEFAULT;
   uSecurityTlsSettings_t tlsSettings = U_SECURITY_TLS_SETTINGS_DEFAULT;
   char serialNumber[U_SECURITY_SERIAL_NUMBER_MAX_LENGTH_BYTES];
-  char path[U_SECURITY_SERIAL_NUMBER_MAX_LENGTH_BYTES + 10];
+  char path[U_SECURITY_SERIAL_NUMBER_MAX_LENGTH_BYTES + 30];
   char buffer[32] = {0};
   size_t size = sizeof(buffer);
   int32_t statusCode = 0;
@@ -400,7 +399,7 @@ void StartDefaultTask(void const * argument)
       // we make the path the serial number of the
       // module
       uSecurityGetSerialNumber(devHandle, serialNumber);
-      snprintf(path, sizeof(path), "/%s.html", serialNumber);
+      snprintf(path, sizeof(path), "/test/plain/ubx_http_request_echo.php?method=post");
 
       // Set the URL of the server; each instance
       // is associated with a single server -
@@ -412,45 +411,43 @@ void StartDefaultTask(void const * argument)
       // purposes of this example they can be
       // left at defaults
       connection.pServerName = MY_SERVER_NAME;
+      connection.pUserName = USERNAME;
+      connection.pPassword = PASSWORD;
+      connection.timeoutSeconds = 60;
 
       // Create an HTTPS instance for the server; to
       // create an HTTP instance instead you would
       // replace &tlsSettings with NULL (and of
       // course use port 8080 on the test HTTP server).
-      pContext = pUHttpClientOpen(devHandle, &connection, &tlsSettings);
+      //pContext = pUHttpClientOpen(devHandle, &connection, &tlsSettings);
+      pContext = pUHttpClientOpen(devHandle, &connection, NULL);
       if (pContext != NULL) {
+          int32_t file_size;
 
           // POST some data to the server; doesn't have to be text,
           // can be anything, including binary data, though obviously
           // you must give the appropriate content-type
-          statusCode = uHttpClientPostRequest(pContext, path, gpMyData, strlen(gpMyData),
-                                              "text/plain", NULL, NULL, NULL);
+          statusCode = uHttpClientPostRequest(pContext, path,  gpMyData, strlen(gpMyData),
+                       "text/plain", NULL, NULL, NULL);
           if (statusCode == 200) {
-
               uPortLog("POST some data to the file \"%s\" on %s.\n", path, MY_SERVER_NAME);
+              file_size = uCellFileSize(devHandle, FILENAME_HTTP_RESPONSE);
+              uPortLog("%s size = %d!\n", FILENAME_HTTP_RESPONSE, file_size);
+              uCellFileRead(devHandle, FILENAME_HTTP_RESPONSE, file_buffer, file_size);
 
-              // GET it back again
-              statusCode = uHttpClientGetRequest(pContext, path, buffer, &size, NULL);
-              if (statusCode == 200) {
-
-                  uPortLog("GET the data: it was \"%s\" (%d byte(s)).\n", buffer, size);
-
-              } else {
-                  uPortLog("Unable to GET file \"%s\" from %s; status code was %d!\n",
-                           path, MY_SERVER_NAME, statusCode);
-              }
+              file_size = uCellFileSize(devHandle, FILENAME_HTTP_POST_PUT);
+              uPortLog("%s size = %d!\n",FILENAME_HTTP_POST_PUT,file_size);
+              uCellFileRead(devHandle, FILENAME_HTTP_POST_PUT, file_buffer, file_size);
           } else {
               uPortLog("Unable to POST file \"%s\" to %s; status code was %d!\n",
                        path, MY_SERVER_NAME, statusCode);
           }
-
           // Close the HTTP instance again
           uHttpClientClose(pContext);
 
       } else {
           uPortLog("Unable to create HTTP instance!\n");
       }
-
       // When finished with the network layer
       uPortLog("Taking down network...\n");
       uNetworkInterfaceDown(devHandle, gNetType);
